@@ -1,10 +1,9 @@
 from dotenv import load_dotenv
 import os
 import interactions
-from interactions import slash_command, SlashContext, slash_option, OptionType, Button,ActionRow, ButtonStyle, listen
+from interactions import slash_command, SlashContext, slash_option, OptionType, Button,ActionRow, ButtonStyle, listen,File,User
 from interactions.api.events import Component
 import random
-
 
 load_dotenv()
 
@@ -21,30 +20,42 @@ COEFF = 0.2
 
 bot = interactions.Client()
 
+"""                 BUTTONS             """
 bt_H = Button(
         custom_id='head',
         style=ButtonStyle.GREEN,
         label="Head",
     )
+
 bt_T = Button(
         custom_id='tail',
         style=ButtonStyle.GREEN,
         label="Tail",
     )
 
+"""                 EMBEDS              """
 
+win_embeds = interactions.Embed(
+            title="WIN",
+            description="You Win",
+            color=0x2C7F1A,
+        )
+lose_embeds = interactions.Embed(
+            title="LOSE",
+            description="you lose",
+            color=0xFF5733)
+win_embeds.set_image(
+            url="https://cdn5.vectorstock.com/i/1000x1000/20/74/you-win-poster-with-prize-cup-vector-17052074.jpg")
+lose_embeds.set_image(
+            url="https://cdn5.vectorstock.com/i/1000x1000/16/84/you-lose-game-screen-slot-machine-lottery-concept-vector-44381684.jpg")
+
+"""                 USER PROFILE        """
 @slash_command(name="profile", description="User's Info")
-@slash_option(
-    name="integer_option",
-    description="Integer Option",
-    required=True,
-    opt_type=OptionType.INTEGER,
-)
+async def profile(ctx: SlashContext):
+    avatar = ctx.author.avatar_url
+    await ctx.channel.send(avatar)
 
-async def profile(ctx: SlashContext, integer_option: int):
-    components: list[ActionRow] = [ActionRow(bt_T,bt_H)]
-    await ctx.send(components=components)
-
+"""                 COIN FLIPPER          """
 @slash_command(name="flip", description="CoinFlipper)")
 @slash_option(
     name="integer_option",
@@ -56,25 +67,10 @@ async def flip(ctx: SlashContext, integer_option: int):
     components: list[ActionRow] = [ActionRow(bt_T,bt_H)]
     await ctx.send(components=components)
 
+"""                 BUTTON'S ACTION         """
 @listen()
 async def on_component(event: Component):
-        win_embeds = interactions.Embed(
-            title="WIN",
-            description="You Win",
-            color=0x2C7F1A,
-        )
-
-        lose_embeds = interactions.Embed(
-            title="LOSE",
-            description="you lose",
-            color=0xFF5733)
-
-        win_embeds.set_image(
-            url="https://cdn5.vectorstock.com/i/1000x1000/20/74/you-win-poster-with-prize-cup-vector-17052074.jpg")
-        lose_embeds.set_image(
-            url="https://cdn5.vectorstock.com/i/1000x1000/16/84/you-lose-game-screen-slot-machine-lottery-concept-vector-44381684.jpg")
         ctx = event.ctx
-
         match ctx.custom_id:
             case "tail":
                 user_coin='tail'
