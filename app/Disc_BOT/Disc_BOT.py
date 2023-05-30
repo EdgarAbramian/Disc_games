@@ -4,7 +4,7 @@ import interactions
 from interactions import slash_command, SlashContext, slash_option, OptionType, Button,ActionRow, ButtonStyle, listen,File,User
 from interactions.api.events import Component
 import random
-
+import requests
 load_dotenv()
 
 discord_token = os.getenv('DISCORD_TOKEN')
