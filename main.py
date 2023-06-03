@@ -1,4 +1,3 @@
-from  app.Disc_BOT.Disc_BOT import*
-# Press the green button in the gutter to run the script.
+from app.Disc_BOT.game import cl, discord_token
 if __name__ == '__main__':
-    bot.start(discord_token)
+    cl.start(discord_token)
