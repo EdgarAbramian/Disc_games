@@ -4,10 +4,11 @@ import os
 import interactions
 from interactions import slash_command, SlashContext, slash_option, OptionType, Button, ActionRow, ButtonStyle, listen, \
     Client, component_callback, ComponentContext
-from interactions.api.events import Component
+import requests
 import random
 from app.database.db import DataBase
-
+from app.Profile_Photo.circ_ava.ava import profile_
+import time
 global AMOUNT
 X_RATE = 1.5
 
@@ -42,8 +43,19 @@ class Game_Bot(Client):
 
     @slash_command(name="profile", description="User's Info")
     async def profile(self, ctx: SlashContext):
-        avatar = ctx.author.avatar_url
-        await ctx.send(avatar)
+        await ctx.defer(ephemeral=False)
+        url = ctx.author.avatar_url
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(r'D:\PycharmProject\Disc_games\app\Profile_Photo\circ_ava\avatar.png', 'wb') as f:
+                f.write(response.content)
+        profile_.ava_to_circ(ctx.author.id, ctx.author.user.display_name)
+
+
+        await ctx.send(file=interactions.File(file_name=r'profile.png',
+                                              file=r'D:\PycharmProject\Disc_games\profile.png'
+                                              ))
+
 
     """                 COIN FLIPPER          """
 
@@ -62,8 +74,11 @@ class Game_Bot(Client):
                 Data_Base.get_balance(ctx.user.id)),
             color=0xF0C43F
         )
+
         global AMOUNT, head, tail, recharge_balance
         AMOUNT = amount
+        interactionResponse = ctx.response
+        await interactionResponse.defer(ephemeral=True, with_message=True)
         if (amount > Data_Base.get_balance(ctx.author.id)):
             await ctx.send(embed=balance_embed, components=[recharge_balance], ephemeral=True)
         else:
