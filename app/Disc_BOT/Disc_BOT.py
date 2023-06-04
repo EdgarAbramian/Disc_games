@@ -50,19 +50,19 @@ async def profile(ctx: SlashContext):
     avatar_url = ctx.author.avatar_url
     res = requests.get(avatar_url, stream=True)
     if res.status_code == 200:
-        with open("../photo/avatar.png", 'wb') as f:
+        with open("../Profile_Photo/profile/avatar.png", 'wb') as f:
             shutil.copyfileobj(res.raw, f)
     else:
         pass
-    im1 = Image.open('../photo/tatras.jpg')
-    im2 = Image.open('../photo/avatar.png')
+    im1 = Image.open('../Profile_Photo/profile/background.png')
+    im2 = Image.open('../Profile_Photo/profile/avatar.png')
     mask_im = Image.new("L", im2.size, 0)
     draw = ImageDraw.Draw(mask_im)
     draw.ellipse((200, 10, 270, 180), fill=255)
     mask_im_blur = mask_im.filter(ImageFilter.GaussianBlur(10))
 
     im1.paste(im2, (0, 0), mask_im_blur)
-    im1.save('profile.jpg', quality=95)
+    im1.save('profile.png', quality=95)
 
     im1.close()
     im2.close()
