@@ -8,16 +8,13 @@ import requests
 import random
 from app.database.db import DataBase
 from app.Profile_Photo.circ_ava.ava import profile_
-import time
 global AMOUNT
 X_RATE = 1.5
-
-Data_Base = DataBase()
 
 load_dotenv()
 discord_token = os.getenv('DISCORD_TOKEN')
 
-
+Data = DataBase()
 class Game_Bot(Client):
     '''         probability
        if the user has chosen heads then the 
@@ -58,7 +55,6 @@ class Game_Bot(Client):
 
 
     """                 COIN FLIPPER          """
-
     @slash_command(name="flip", description="CoinFlipper)")
     @slash_option(
         name="amount",
@@ -71,52 +67,52 @@ class Game_Bot(Client):
         await ctx.defer()
         balance_embed = interactions.Embed(
             title="🏦💰🪙Balance is insufficient 🪙💰🏦" + "\n                Your balance: " + str(
-                Data_Base.get_balance(ctx.user.id)),
+                Data.get_balance(ctx.user.id)),
             color=0xF0C43F
         )
 
         global AMOUNT, head, tail, recharge_balance
         AMOUNT = amount
-        interactionResponse = ctx.response
-        await interactionResponse.defer(ephemeral=True, with_message=True)
-        if (amount > Data_Base.get_balance(ctx.author.id)):
+
+        if (amount > Data.get_balance(ctx.author.id)):
             await ctx.send(embed=balance_embed, components=[recharge_balance], ephemeral=True)
         else:
-
             await ctx.send(components=[head, tail], ephemeral=True)
 
     """                 BUTTON'S ACTION         """
 
     @component_callback("tail", "head")
     async def my_callback(self, ctx: ComponentContext):
-
+        await ctx.defer(ephemeral=False)
         global win_embeds, lose_embeds, lose, win
         user_coin = ctx.custom_id
         win_embeds = interactions.Embed(
-            title="💸💸💸YOU WON!💸💸💸\n    Your balance : " + str(Data_Base.get_balance(ctx.user.id)),
+            title="💸💸💸YOU WON!💸💸💸\n    Your balance : " + str(Data.get_balance(ctx.user.id)),
             color=0x2C7F1A,
         )
         lose_embeds = interactions.Embed(
-            title="⛔️⛔️📈YOU LOSE⛔️⛔️📈\n    Your balance : " + str(Data_Base.get_balance(ctx.user.id)),
+            title="⛔️⛔️📈YOU LOSE⛔️⛔️📈\n    Your balance : " + str(Data.get_balance(ctx.user.id)),
             color=0xFF5733,
         )
         win_embeds.set_thumbnail(
             url="https://cdn.discordapp.com/avatars/1055531650148220948/ee9c8061cbdee30372883dd74f490e5f.png?size=1024")
         lose_embeds.set_thumbnail(
-            url="https://cdn.discordapp.com/avatars/965863987411570698/ee184cd0603dfc2d1e0808fbbd23919d.png?size=1024"
-        )
+            url="https://images.app.goo.gl/ED5RpoYETAUiZaiC9")
+
         if ('head' if random.random() < (lambda user_coin: COEFF if (user_coin == 'head') else 1 - COEFF)(
                 user_coin=user_coin) else 'tail') == user_coin:
-            Data_Base.add_cash(ctx.author.id, AMOUNT * X_RATE)
+            Data.add_cash(ctx.author.id, AMOUNT * X_RATE)
             await ctx.send(embed=win_embeds)
         else:
-            Data_Base.minus_cash(ctx.author.id, AMOUNT)
+            Data.minus_cash(ctx.author.id, AMOUNT)
             await ctx.send(embed=lose_embeds)
 
     """
                             CoinFlipper algorithm
     COEFF = lambda user_coin :  0.2 if(user_coin == 'head')  else 0.8
     flip = lambda user_coin: 'head' if random.random() < COEFF(user_coin = user_coin) else 'tail'
+    Ваше сообщение не было доставлено. Обычно такое случается, потому что у вас нет общих серверов с получателем или получатель принимает личные сообщения только от друзей. 
+    Полный перечень причин можно посмотреть здесь: https://support.discord.com/hc/ru/articles/360060145013
     """
 
 

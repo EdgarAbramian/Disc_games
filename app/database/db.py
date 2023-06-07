@@ -117,3 +117,4 @@ class DataBase:
                 self.con.close()
                 return result
 
+Data = DataBase()

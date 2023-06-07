@@ -1,5 +1,5 @@
 from PIL import Image, ImageDraw, ImageFont
-from app.database.db import *
+from app.database.db import Data
 
 
 
@@ -20,26 +20,29 @@ class ava():
         return im.resize(s, Image.LANCZOS)
     global size
     size = (280, 280)
-    def ava_to_circ(self,id,USER_NAME):
-        from app.database.db import DataBase
-        Data = DataBase()
-        im = Image.open(r'D:\PycharmProject\Disc_games\app\Profile_Photo\circ_ava\avatar.png')
-        im1 = Image.open(r'D:\PycharmProject\Disc_games\app\Profile_Photo\circ_ava\background.png')
 
-        im =self.crop(im, size)
+    def ava_to_circ(self, id, USER_NAME):
+        from app.database.db import DataBase
+
+        im = Image.open(r'D:\PycharmProject\Disc_games\app\Profile_Photo\circ_ava\avatar.png').convert('RGBA')
+        im1 = Image.open(r'D:\PycharmProject\Disc_games\app\Profile_Photo\circ_ava\background.png').convert('RGBA')
+
+        im = self.crop(im, size).convert('RGBA')
         im.putalpha(self.prepare_mask(size, 4))
         im.convert("RGBA")
 
-        prof_template = Image.new('RGBA', (im1.size), (0, 0, 0, 0))
+        prof_template = Image.new('RGBA', im1.size, (0, 0, 0, 0)).convert('RGBA')
         prof_template.convert('RGBA')
         prof_template.paste(im1)
-        prof_template.paste(im, (770, 128),mask = im.split()[3])
+        prof_template.paste(im, (770, 125), mask=im)#.split()[3]
 
 
         prfile_png = ImageDraw.Draw(prof_template)
         font = ImageFont.truetype(r'D:\PycharmProject\Disc_games\app\Profile_Photo\circ_ava\OctinVintageBRg Bold.ttf', size=70)
-        prfile_png.text((650, 400), USER_NAME, font=font)#142022
-        prfile_png.text((170, 550), "Balance: "+ str(Data.get_balance(id)), font=font)  # + str(Data.get_balance(id)))
+
+        prfile_png.text((int(900-(len(USER_NAME)*40)/2) ,
+                         400), USER_NAME, font=font,  fill=(15,25,26))#142022
+        prfile_png.text((170, 550), "Balance: ", font=font)  # + str(Data.get_balance(id)))
         prfile_png.text((170, 650), "SMS: ", font=font)
         prfile_png.text((170, 750), "TOP: ", font=font)
         prfile_png.text((1200, 550), "ONLINE: ", font=font)
@@ -52,7 +55,6 @@ class ava():
 
 
 profile_ = ava()
-
 
 
 
