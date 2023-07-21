@@ -1,18 +1,19 @@
-import emoji
+import time
+
 from dotenv import load_dotenv
 import os
 import interactions
-from interactions import slash_command, SlashContext, slash_option, OptionType, Button, ActionRow, ButtonStyle, listen, \
-    Client, component_callback, ComponentContext
+from interactions import slash_command, SlashContext, slash_option, OptionType, Client, component_callback, ComponentContext
 import requests
 import random
+from interactions import listen
+from interactions.api.events import ChannelCreate,VoiceUserJoin,VoiceUserLeave
+
 from app.database.db import DataBase
 from app.Profile_Photo.circ_ava.ava import profile_
-
 global AMOUNT
-from app.Disc_BOT.slot_comp import *
-
-X_RATE = 1.5
+from app.Disc_BOT.Buttons import *
+COIN_FLIPPER_RATE = 1.5
 
 load_dotenv()
 discord_token = os.getenv('DISCORD_TOKEN')
@@ -28,18 +29,14 @@ class Game_Bot(Client):
        COEFF sets the probability
        flip makes a decision('H' or 'T') based on COEFF
             '''
-    global COEFF
+    global COEFF,mes
     COEFF = 0.2
 
-    global win_embeds, lose_embeds, lose, win, head, tail, recharge_balance
 
     lose = interactions.File(file_name="app/Disc_BOT/lose.png", file="app/Disc_BOT/lose.png")
     win = interactions.File(file_name="app/Disc_BOT/win.png", file="app/Disc_BOT/win.png")
 
-    """                 BUTTONS             """
-    head = Button(style=ButtonStyle.BLURPLE, label='head', custom_id="head")
-    tail = Button(style=ButtonStyle.GREEN, label='tail', custom_id="tail")
-    recharge_balance = Button(style=ButtonStyle.BLUE, emoji="💲", label='Recharge balance', custom_id="recharge_balance")
+
 
     """                 USER PROFILE        """
 
@@ -79,16 +76,43 @@ class Game_Bot(Client):
         AMOUNT = amount
 
         if (amount > Data.get_balance(ctx.author.id)):
-            await ctx.send(embed=balance_embed, components=[recharge_balance], ephemeral=True)
+            await ctx.send(embed=balance_embed, components=[recharge_balance])
         else:
-            await ctx.send(components=[head, tail], ephemeral=True)
+            await ctx.send(components=[head, tail])
 
-    """                 BUTTON'S ACTION         """
+
+    """
+                            CoinFlipper algorithm
+    COEFF = lambda user_coin :  0.2 if(user_coin == 'head')  else 0.8
+    flip = lambda user_coin: 'head' if random.random() < COEFF(user_coin = user_coin) else 'tail'
+    Ваше сообщение не было доставлено. Обычно такое случается, потому что у вас нет общих серверов с получателем или получатель принимает личные сообщения только от друзей. 
+    Полный перечень причин можно посмотреть здесь: https://support.discord.com/hc/ru/articles/360060145013
+    """
+
+    @slash_command(name="roulette", description="roulette)")
+    @slash_option(
+            name="amount",
+            description="amount",
+            required=True,
+            opt_type=OptionType.INTEGER,
+            min_value=1,
+    )
+    async def roulette(self, ctx: SlashContext, amount: int):
+            global mes
+            sum = str(amount) + "💲"
+            roulette_embed = interactions.Embed(
+                title="💸💸💸💸💸💸ROULETTE💸💸💸💸💸💸\n\t\t💰💰💰 Your Bet💰💰💰 : " + sum,
+                color=0x2C7F1A,
+            ).set_image(
+                url="https://thumbs.gfycat.com/DecimalCheerfulAsianlion-size_restricted.gif")
+            await ctx.send(components=desk1, embed=roulette_embed)
+            mes = ctx.id
+            await ctx.send(components=desk2)
+            await ctx.send(components=desk3)
 
     @component_callback("tail", "head")
-    async def my_callback(self, ctx: ComponentContext):
+    async def callback(self, ctx: ComponentContext):
         await ctx.defer(ephemeral=False)
-        global win_embeds, lose_embeds, lose, win
         user_coin = ctx.custom_id
         win_embeds = interactions.Embed(
             title="💸💸💸YOU WON!💸💸💸\n    Your balance : " + str(Data.get_balance(ctx.user.id)),
@@ -105,42 +129,17 @@ class Game_Bot(Client):
         # "https://t3.ftcdn.net/jpg/03/12/54/80/360_F_312548010_JsXZ9vxIXTbgZlDr1IwlMTogrN84BN1L.jpg"
         if ('head' if random.random() < (lambda user_coin: COEFF if (user_coin == 'head') else 1 - COEFF)(
                 user_coin=user_coin) else 'tail') == user_coin:
-            Data.add_cash(ctx.author.id, AMOUNT * X_RATE)
+            Data.add_cash(ctx.author.id, AMOUNT * COIN_FLIPPER_RATE)
             await ctx.send(embed=win_embeds)
         else:
             Data.minus_cash(ctx.author.id, AMOUNT)
             await ctx.send(embed=lose_embeds)
 
-    """
-                            CoinFlipper algorithm
-    COEFF = lambda user_coin :  0.2 if(user_coin == 'head')  else 0.8
-    flip = lambda user_coin: 'head' if random.random() < COEFF(user_coin = user_coin) else 'tail'
-    Ваше сообщение не было доставлено. Обычно такое случается, потому что у вас нет общих серверов с получателем или получатель принимает личные сообщения только от друзей. 
-    Полный перечень причин можно посмотреть здесь: https://support.discord.com/hc/ru/articles/360060145013
-    """
-
-    @slash_command(name="roulette", description="roulette)")
-    @slash_option(
-        name="amount",
-        description="amount",
-        required=True,
-        opt_type=OptionType.INTEGER,
-        min_value=1,
-    )
-    async def roulette(self, ctx: SlashContext, amount: int):
-        # paginator =paginators.Paginator.create_components(row_0)
-        sum = str(amount) + "💲"
-        roulette_embed = interactions.Embed(
-            title="💸💸💸💸💸💸ROULETTE💸💸💸💸💸💸\n\t\t💰💰💰 Your Bet💰💰💰 : " + sum,
-            color=0x2C7F1A,
-        ).set_thumbnail(
-            url="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRj0lRC-xGA4WQbsTk-tT4BXtpvsWoGA263hg&usqp=CAU")
-        await ctx.send(components=desk1, embed=roulette_embed)
-        await ctx.send(components=desk2)
-        await ctx.send(components=desk3)
-
     @component_callback(btn_id for btn_id in desk_ids)
     async def my_callback(self, ctx: ComponentContext):
+        """GENERATING RANDOM NUM """
+        num = random.randint(0, 37)
+
         win_embeds = interactions.Embed(
             title="💸💸💸YOU WON!💸💸💸\n    Your balance : " + str(Data.get_balance(ctx.user.id)),
             color=0x2C7F1A,
@@ -149,13 +148,51 @@ class Game_Bot(Client):
             title="⛔️⛔️📈YOU LOSE⛔️⛔️📈\n    Your balance : " + str(Data.get_balance(ctx.user.id)),
             color=0xFF5733,
         )
-        num = random.randint(0, 37)
-        if num == int(ctx.custom_id):
+        #        BUTTONS FROM 0 TO 37
+        if (ctx.custom_id in desk_num_ids and num == int(ctx.custom_id)):
             await ctx.send(embed=win_embeds)
+        #        BUTTONS __1to18__ and __19to37__
+        elif((ctx.custom_id == "high" and num <= 18)
+                        or (ctx.custom_id == "lower" and num > 18 and num <=37)):
+            await ctx.send(embed=win_embeds)
+        #       BUTTONS __ODD__ and __EVEN__
+        elif ((num % 2 == 0 and ctx.custom_id == "even")
+                            or (num % 2 != 0 and ctx.custom_id == "odd")):
+            await ctx.send(embed=win_embeds)
+        #       BUTTONS __RED__ and __BLACK__
+        elif ((ctx.custom_id == "red" and num in red_val)
+                    or (ctx.custom_id == "black" and not(num in red_val))):
+            await ctx.send(embed=win_embeds)
+        #        COIN_FLIPPER
         else:
-            await ctx.send(embed=lose_embeds)
-        print(ctx.custom_id + " num: " + str(num))
+            channel = await ctx.bot.fetch_channel(ctx.channel_id)
+            message = await channel.fetch_message(mes)
+            file = interactions.File(r'D:\PycharmProject\Disc_games\app\GIF\out.gif')
 
+            edited_embed = interactions.Embed(
+                title="💸💸💸💸💸💸HELLO💸💸💸💸💸💸\n\t\t💰💰💰 Your Bet💰💰💰",
+                color=0x2C7F1A,
+            ).set_image(url="attachment://out.gif")
+            await message.edit(file =file ,embed = edited_embed)
+            print(ctx.message.id)
+            await ctx.send(embed=lose_embeds)
+        # 109105
+        print(str(num) + " " + ctx.custom_id)
+
+
+    """Time spent in voice channel"""
+    @listen(VoiceUserJoin)
+    async def an_event_VoiceUserJoin(user, event: VoiceUserJoin):
+        global t1
+        t1 = time.time()
+        print(f"VoiceUserJoin: {event.channel.name}, USER:{event.author.id}")
+    @listen(VoiceUserLeave)
+    async def VoiceUserLeave(user, event: VoiceUserLeave):
+        global t2
+        t2 = time.time()
+        spent = t2-t1
+        print(f"VoiceUserLeave: {event.channel.name}, USER:{event.author.user.display_name}, Time Spent:{t2-t1}")
+        Data.add_voice(event.author.id, spent)
 
 
 cl = Game_Bot()
