@@ -100,7 +100,6 @@ class DataBase:
     def get_clan_members(self, clan):
         ...
 
-
     def is_clan_exist(self, clan_id = None, name = None, code=None):
         self.connect()
         result = None
@@ -117,4 +116,11 @@ class DataBase:
                 self.con.close()
                 return result
 
+    def add_voice(self, user_id, spent_time):
+        self.connect()
+        with self.con.cursor(buffered=True) as cur:
+            cur.execute(f'''UPDATE users SET `voice_time`=`voice_time` + %s WHERE (`user_id` = %s) ''', (spent_time, user_id, ))
+            self.con.commit()
+
+        self.con.close()
 Data = DataBase()
